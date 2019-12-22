@@ -1,0 +1,5 @@
+TsvHttpData-1.0
+https://s3.eu-central-1.wasabisys.com/aicrowd-public-datasets/snakes-challenge/Oct-2019/train_images.tar.gz	26062948858	I/T5hjCfnZr1zC3Xd0fR8w==
+https://s3.eu-central-1.wasabisys.com/aicrowd-public-datasets/snakes-challenge/Oct-2019/train_labels.tar.gz	1787596	5YXojSsUclzikiQJSca0Ww==
+https://s3.eu-central-1.wasabisys.com/aicrowd-public-datasets/snakes-challenge/Oct-2019/test_images_small.tar.gz	58869614	MMhWrBeAkBzszHVeIN7QDw==
+https://s3.eu-central-1.wasabisys.com/aicrowd-public-datasets/snakes-challenge/Oct-2019/test_metadata_small.tar.gz	2612	pnvnh4VzC787JS8m9+UilQ==
