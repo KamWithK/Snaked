@@ -60,3 +60,23 @@ def split_data(transforms=None):
 train_loader = split_data(transforms=transforms["train"])
 validation_loader = split_data(transforms=transforms["validation"])
 test_loader = split_data(transforms=transforms["validation"])
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model = models.vgg16(pretrained=True)
+model.to(device)
+
+# Freeze all weights
+for param in model.parameters():
+    param.requires_grad = False
+
+model.classifier[6] = nn.Sequential(
+    nn.Linear(model.classifier[6].in_features, 256),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(256, 85),
+    nn.LogSoftmax(dim=1)
+)
+
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(model.parameters())
