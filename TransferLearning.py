@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import torch, torchvision
-import torch.nn.functional as F
-import os, io, time
+import torch, torchvision, time
 
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as pyplot
-import torch.optim as optim
 
-from PIL import Image
-from torch import nn
-from torchvision import datasets, transforms, models
+from torch import nn, optim
+from torchvision import transforms, models
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
 from SnakeDataset import SnakeDataset
