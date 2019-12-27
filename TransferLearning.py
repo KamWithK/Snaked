@@ -17,16 +17,26 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
 from SnakeDataset import SnakeDataset
 
-img_size = 128
-
-data_transforms = transforms.Compose([
-    transforms.Resize(img_size),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(20),
-    transforms.RandomCrop(img_size),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])
+transforms = {
+    "train":
+    transforms.Compose([
+        transforms.RandomResizedCrop(size=256, scale=(0.8, 1)),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(),
+        transforms.RandomHorizontalFlip(),
+        transforms.CenterCrop(size=224), #ImgNet standards
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)), # ImgNet standards
+    ]),
+    
+    "validation":
+    transforms.Compose([
+        transforms.Resize(size=256),
+        transforms.CenterCrop(size=224), #ImgNet standards
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)), # ImgNet standards
+    ])
+}
 
 def split_data(transforms=None):
     # Train - fit model, Validation - tune hyperparameters, Test - final results
@@ -53,4 +63,6 @@ def split_data(transforms=None):
 
     return train_loader, validation_loader, test_loader
 
-train_loader, validation_loader, test_loader = split_data(transforms=data_transforms)
+train_loader = split_data(transforms=transforms["train"])
+validation_loader = split_data(transforms=transforms["validation"])
+test_loader = split_data(transforms=transforms["validation"])
