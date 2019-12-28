@@ -34,5 +34,8 @@ class SnakeDataset(Dataset):
         to_tensor = transforms.ToTensor()
         img_tensor = to_tensor(img)
 
-        label = self.df["scientific_name"][index]
-        return (img_tensor, label)
+        self.df["scientific_name"] = self.df["scientific_name"].astype("category")
+        self.df["species_num"] = self.df["scientific_name"].cat.codes
+
+        number = self.df["species_num"][index]
+        return (img_tensor, number.astype("long"))
