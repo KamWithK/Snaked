@@ -4,6 +4,7 @@
 import torch, torchvision, time
 
 import numpy as np
+import pandas as pd
 
 from torch import nn, optim
 from torchvision import transforms, models
