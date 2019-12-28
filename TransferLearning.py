@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import torch, torchvision, time
+import torch, time
 
 import numpy as np
-import pandas as pd
 
 from torch import nn, optim
 from torchvision import transforms, models
-from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import SubsetRandomSampler
 from SnakeDataset import SnakeDataset
+from TrainHelper import LossAccuracyKeeper
 
 transforms = {
     "train":
@@ -23,7 +23,6 @@ transforms = {
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)), # ImgNet standards
     ]),
-    
     "validation":
     transforms.Compose([
         transforms.Resize(size=256),
@@ -35,9 +34,9 @@ transforms = {
 
 def split_data(transforms=None):
     # Train - fit model, Validation - tune hyperparameters, Test - final results
-    train_data = SnakeDataset(img_dir="../train", csv_path="../train_labels.csv", transforms=transforms)
-    validation_data = SnakeDataset(img_dir="../train", csv_path="../train_labels.csv", transforms=transforms)
-    test_data = SnakeDataset(img_dir="../train", csv_path="../train_labels.csv", transforms=transforms)
+    train_data = SnakeDataset("../train", "../train_labels.csv", transforms["train"])
+    validation_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
+    test_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
 
     num_images = len(train_data)
     shuffle = np.random.permutation(num_images)
@@ -58,9 +57,7 @@ def split_data(transforms=None):
 
     return train_loader, validation_loader, test_loader
 
-train_loader = split_data(transforms=transforms["train"])
-validation_loader = split_data(transforms=transforms["validation"])
-test_loader = split_data(transforms=transforms["validation"])
+train_loader, validation_loader, test_loader = split_data(transforms=transforms)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
