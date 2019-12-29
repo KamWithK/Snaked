@@ -89,7 +89,13 @@ class Trainer():
                     # Judges whether improvement has been made
                     # If not in set max number of epochs, stop early
                     if loss_accuracy_keeper.safe_improvement(max_epoch_stop) == [True, True]:
-                        torch.save(self.model.state_dict(), save_path)
+                        state = {
+                            "epoch": epoch,
+                            "state_dict": self.model.state_dict,
+                            "optimizer": self.optimizer.state_dict(),
+                            "validation_loss_min": loss_accuracy_keeper.validation_loss_min,
+                        }
+                        torch.save(state, save_path)
                         best_epoch = epoch
                     elif loss_accuracy_keeper.safe_improvement(max_epoch_stop) == [False, False]:
                         # Load state dict
@@ -105,3 +111,12 @@ class Trainer():
             f"{total_time:.2f} total seconds elapsed. {total_time / (epoch + 1):.2f} seconds per epoch"
         )
         return self.model, loss_accuracy_keeper.get_history_dataframe()
+
+    def load(self, model, path, trainning=False):
+        checkpoint = torch.load(path)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+        if trainning == False:
+            model.eval()
+        else: model.train()
