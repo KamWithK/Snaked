@@ -32,10 +32,10 @@ for param in model.parameters():
     param.requires_grad = False
 
 model.classifier[6] = nn.Sequential(
-    nn.Linear(model.classifier[6].in_features, 85),
-    #nn.ReLU(),
-    #nn.Dropout(0.2),
-    #nn.Linear(224, 85),
+    nn.Linear(model.classifier[6].in_features, 256),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(256, 85),
     nn.LogSoftmax(dim=1)
 )
 
