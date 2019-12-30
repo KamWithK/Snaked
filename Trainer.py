@@ -26,8 +26,10 @@ class Trainer():
 
         overall_start = time.time()
 
+        loss_accuracy_keeper = LossAccuracyKeeper()
+
         for epoch in range(n_epochs):
-            loss_accuracy_keeper = LossAccuracyKeeper()
+            loss_accuracy_keeper.reset()
 
             epoch_start_time = time.time()
             self.model.train()
@@ -80,8 +82,6 @@ class Trainer():
                     # Average losses
                     loss_accuracy_keeper.update_average_loss_acc(len(self.train_loader.dataset))
 
-                    loss_accuracy_keeper.update_history()
-
                     # Print results
                     if (epoch + 1) % print_every == 0:
                         loss_accuracy_keeper.print_progress(epoch)
@@ -99,13 +99,14 @@ class Trainer():
                         best_epoch = epoch
                     elif loss_accuracy_keeper.safe_improvement(max_epoch_stop) == [False, False]:
                         # Load state dict
-                        self.model.load_state_dict(torch.load(save_path))
+                        #self.model.load_state_dict(torch.load(save_path))
                         break
 
         self.model.optimizer = self.optimizer
         total_time = time.time() - overall_start
+        validation_acc = loss_accuracy_keeper.acc["validation"]
         print(
-            f"\nBest epoch: {best_epoch} with loss: {loss_accuracy_keeper.validation_loss_min:.2f} and accuracy: {100 * loss_accuracy_keeper.acc:.2f}%"
+            f"\nBest epoch: {best_epoch} with loss: {loss_accuracy_keeper.validation_loss_min:.2f} and accuracy: {100 * validation_acc:.2f}%"
         )
         print(
             f"{total_time:.2f} total seconds elapsed. {total_time / (epoch + 1):.2f} seconds per epoch"

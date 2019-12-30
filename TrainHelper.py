@@ -12,6 +12,9 @@ class LossAccuracyKeeper():
         self.validation_loss_min = np.Inf
         self.epochs_no_improvement = 0
 
+        self.reset()
+
+    def reset(self):
         self.loss = {
             "train": 0.0,
             "validation": 0.0
@@ -35,6 +38,8 @@ class LossAccuracyKeeper():
         # Average losses and accuracy
         self.loss["train"], self.loss["validation"] = self.loss["train"] / data_length, self.loss["validation"] / data_length
         self.acc["train"], self.acc["validation"] = self.acc["train"] / data_length, self.acc["validation"] / data_length
+
+        self.history.append([self.loss["train"], self.loss["validation"], self.acc["train"], self.acc["validation"]])
 
         if self.loss["validation"] < self.validation_loss_min:
             # Track improvement
@@ -64,9 +69,6 @@ class LossAccuracyKeeper():
         print(
             f"\t\tTraining Accuracy: {100 * train_acc:.2f}%\t Validation Accuracy: {100 * validation_acc:.2f}%"
         )
-    
-    def update_history(self):
-        self.history.append([self.loss["train"], self.loss["validation"], self.acc["train"], self.acc["validation"]])
     
     def get_history_dataframe(self):
         self.history = pd.DataFrame(
