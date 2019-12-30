@@ -19,7 +19,7 @@ def split_data(transforms=None):
     # Position of where to start and end splitting data
     train_end = int(num_images * 0.95)
     validation_start = int(num_images * 0.95)
-    validation_end = int(num_images * 0.9975)
+    validation_end = int(num_images * 0.975)
     test_start = int(num_images * 0.975)
 
     train_sampler = SubsetRandomSampler(shuffle[:train_end])
