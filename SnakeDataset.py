@@ -20,7 +20,7 @@ class SnakeDataset(Dataset):
     
     # Return a single pair (img_tensor, label)
     def __getitem__(self, index):
-        img = Image.open(self.img_dir + "/" + self.df["filename"][index])
+        img = Image.open(self.img_dir + "/" + self.df["filename"][index]).convert("RGB")
 
         to_tensor = transforms.ToTensor()
         img_tensor = to_tensor(img)
