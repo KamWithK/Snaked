@@ -21,12 +21,10 @@ class SnakeDataset(Dataset):
     # Return a single pair (img_tensor, label)
     def __getitem__(self, index):
         img = Image.open(self.img_dir + "/" + self.df["filename"][index]).convert("RGB")
-
-        to_tensor = transforms.ToTensor()
-        img_tensor = to_tensor(img)
+        img = self.transforms(img)
 
         self.df["scientific_name"] = self.df["scientific_name"].astype("category")
         self.df["species_num"] = self.df["scientific_name"].cat.codes
 
         number = self.df["species_num"][index]
-        return (img_tensor, number.astype("long"))
+        return (img, number.astype("long"))
