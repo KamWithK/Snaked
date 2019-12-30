@@ -33,8 +33,8 @@ class LossAccuracyKeeper():
     
     def update_average_loss_acc(self, data_length):
         # Average losses and accuracy
-        self.loss = self.loss / len(data_length)
-        self.acc = self.acc / len(data_length)
+        self.loss["train"], self.loss["validation"] = self.loss["train"] / data_length, self.loss["validation"] / data_length
+        self.acc["train"], self.acc["validation"] = self.acc["train"] / data_length, self.acc["validation"] / data_length
 
         if self.loss["validation"] < self.validation_loss_min:
             # Track improvement
