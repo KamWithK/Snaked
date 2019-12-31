@@ -137,6 +137,7 @@ class Trainer():
                     elif loss_accuracy_keeper.safe_improvement(max_epoch_stop) == [False, False]:
                         # Load state dict
                         #self.model.load_state_dict(torch.load(save_path))
+                        print("Exiting early, as there has been no recent improvements")
                         break
 
         self.model.optimizer = self.optimizer
