@@ -5,6 +5,8 @@ from torch import nn, optim
 from torchvision import transforms, models
 from Trainer import Trainer
 
+# TODO extend Trainer
+
 transforms = {
     "train":
     transforms.Compose([
