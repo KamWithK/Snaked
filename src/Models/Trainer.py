@@ -31,14 +31,22 @@ class Trainer():
         shuffle = np.random.permutation(num_images)
 
         # Position of where to start and end splitting data
+        # Extra duplicates which don't use full dataset are for testing
         train_end = int(num_images * 0.95)
         validation_start = int(num_images * 0.95)
         validation_end = int(num_images * 0.975)
         test_start = int(num_images * 0.975)
 
+        #train_end = int(num_images * 0.001)
+        #validation_start = int(num_images * 0.001)
+        #validation_end = int(num_images * 0.002)
+        #test_start = int(num_images * 0.0002)
+        #test_end = int(num_images * 0.0003)
+
         train_sampler = SubsetRandomSampler(shuffle[:train_end])
         validation_sampler = SubsetRandomSampler(shuffle[validation_start:validation_end])
         test_sampler = SubsetRandomSampler(shuffle[test_start:])
+        #test_sampler = SubsetRandomSampler(shuffle[test_start:test_end])
 
         train_loader = DataLoader(train_data, sampler=train_sampler)
         validation_loader = DataLoader(validation_data, sampler=validation_sampler)
