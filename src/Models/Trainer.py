@@ -7,7 +7,7 @@ import numpy as np
 
 from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import transforms
-from .TrainHelper import LossAccuracyKeeper
+from .StatHelper import LossAccuracyKeeper
 from Data.SnakeDataset import SnakeDataset
 
 # Trains models
