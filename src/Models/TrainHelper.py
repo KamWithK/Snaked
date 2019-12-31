@@ -5,6 +5,7 @@ import torch
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 class LossAccuracyKeeper():
     def __init__(self):
@@ -78,3 +79,23 @@ class LossAccuracyKeeper():
                         ]
         )
         return self.history
+
+    def graph(self):
+        plt.figure(1)
+        for c in ["train_loss", "validation_loss"]:
+            plt.plot(self.history[c], label=c)
+        plt.legend()
+        plt.xlabel("Epoch")
+        plt.ylabel("Average Negative Log Likelihood")
+        plt.title("Training and Validation Losses")
+        plt.savefig("Training and Validation Losses.png")
+
+        plt.figure(2)
+        for c in ["train_acc", "validation_acc"]:
+            plt.plot(100 * self.history[c], label=c)
+        plt.legend()
+        plt.xlabel("Epoch")
+        plt.ylabel("Average Accuracy")
+        plt.title("Training and Validation Accuracy")
+        plt.savefig("Training and Validation Accuracy")
+        

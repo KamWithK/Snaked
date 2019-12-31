@@ -1,27 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import TransferLearning
+from torchvision import models
+from torch import nn, optim
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+from Models.TransferLearning import TransferLearning
 
-model, history = TransferLearning.model, TransferLearning.history
-
-plt.figure(1)
-for c in ["train_loss", "validation_loss"]:
-    plt.plot(history[c], label=c)
-plt.legend()
-plt.xlabel("Epoch")
-plt.ylabel("Average Negative Log Likelihood")
-plt.title("Training and Validation Losses")
-plt.savefig("Training and Validation Losses.png")
-
-plt.figure(2)
-for c in ["train_acc", "validation_acc"]:
-    plt.plot(100 * history[c], label=c)
-plt.legend()
-plt.xlabel("Epoch")
-plt.ylabel("Average Accuracy")
-plt.title("Training and Validation Accuracy")
-plt.savefig("Training and Validation Accuracy")
+# VGG16 model training
+vgg16_model = models.vgg16(pretrained=True)
+criterion = nn.NLLLoss()
+optimizer = optim.Adam(vgg16_model.parameters())
+vgg_trainer = TransferLearning(vgg16_model, criterion, optimizer)
+vgg_trainer.train("Saved/VGG16 - 1.pth")

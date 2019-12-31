@@ -2,20 +2,49 @@
 # coding: utf-8
 
 import torch, time
-import DataSetup
 
-from TrainHelper import LossAccuracyKeeper
+import numpy as np
+
+from torch.utils.data import SubsetRandomSampler, DataLoader
+from torchvision import transforms
+from .TrainHelper import LossAccuracyKeeper
+from Data.SnakeDataset import SnakeDataset
 
 # Trains models
 class Trainer():
     def __init__(self, model, transforms, criterion, optimizer):
-        self.train_loader, self.validation_loader, self.test_loader = DataSetup.split_data(transforms)
+        self.train_loader, self.validation_loader, self.test_loader = self.get_loaders(transforms)
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
         self.model.to(self.device)
 
         self.criterion, self.optimizer = criterion, optimizer
+    
+    def get_loaders(self, transforms=transforms.ToTensor()):
+        # Train - fit model, Validation - tune hyperparameters, Test - final results
+        train_data = SnakeDataset("../train", "../train_labels.csv", transforms["train"])
+        validation_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
+        test_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
+
+        num_images = len(train_data)
+        shuffle = np.random.permutation(num_images)
+
+        # Position of where to start and end splitting data
+        train_end = int(num_images * 0.95)
+        validation_start = int(num_images * 0.95)
+        validation_end = int(num_images * 0.975)
+        test_start = int(num_images * 0.975)
+
+        train_sampler = SubsetRandomSampler(shuffle[:train_end])
+        validation_sampler = SubsetRandomSampler(shuffle[validation_start:validation_end])
+        test_sampler = SubsetRandomSampler(shuffle[test_start:])
+
+        train_loader = DataLoader(train_data, sampler=train_sampler)
+        validation_loader = DataLoader(validation_data, sampler=validation_sampler)
+        test_loader = DataLoader(test_data, sampler=test_sampler)
+
+        return train_loader, validation_loader, test_loader
 
     def train(self, save_path, max_epoch_stop=5, n_epochs=30, print_every=2):
         try:
