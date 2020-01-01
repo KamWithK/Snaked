@@ -48,9 +48,9 @@ class Trainer():
         test_sampler = SubsetRandomSampler(shuffle[test_start:])
         #test_sampler = SubsetRandomSampler(shuffle[test_start:test_end])
 
-        train_loader = DataLoader(train_data, sampler=train_sampler)
-        validation_loader = DataLoader(validation_data, sampler=validation_sampler)
-        test_loader = DataLoader(test_data, sampler=test_sampler)
+        train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=128, num_workers=20)
+        validation_loader = DataLoader(validation_data, sampler=validation_sampler, batch_size=128, num_workers=20)
+        test_loader = DataLoader(test_data, sampler=test_sampler, batch_size=128, num_workers=20)
 
         return train_loader, validation_loader, test_loader
 
