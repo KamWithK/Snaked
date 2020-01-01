@@ -7,15 +7,21 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from torch.utils.tensorboard import SummaryWriter
+
 class LossAccuracyKeeper():
     def __init__(self):
         self.history = []
         self.validation_loss_min = np.Inf
+        self.current_epoch = -1 # Set to negative one to maintain 0 as first epoch after original reset
         self.epochs_no_improvement = 0
 
         self.reset()
+        self.writer = SummaryWriter()
 
     def reset(self):
+        self.current_epoch += 1
+
         self.loss = {
             "train": 0.0,
             "validation": 0.0
@@ -26,7 +32,7 @@ class LossAccuracyKeeper():
             "validation": 0.0
         }
         
-    def update_loss_acc(self, data, target, output, criterion, form: str):
+    def update_loss_acc(self, data, target, output, criterion, form: str, progress: int, data_length: int):
         loss = criterion(output, target)
         self.loss[form] += loss.item() * data.size(0)
         
@@ -34,7 +40,10 @@ class LossAccuracyKeeper():
         correct_tensor = pred.eq(target.data.view_as(pred))
         accuracy = torch.mean(correct_tensor.type(torch.FloatTensor))
         self.acc[form] += accuracy.item() * data.size(0)
-    
+
+        self.writer.add_scalar(form + " loss", self.loss[form] / data_length, self.current_epoch * (progress/data_length))
+        self.writer.add_scalar(form + " accuracy", self.acc[form] / data_length, self.current_epoch * (progress/data_length))
+
     def update_average_loss_acc(self, data_length):
         # Average losses and accuracy
         self.loss["train"], self.loss["validation"] = self.loss["train"] / data_length, self.loss["validation"] / data_length
@@ -98,4 +107,3 @@ class LossAccuracyKeeper():
         plt.ylabel("Average Accuracy")
         plt.title("Training and Validation Accuracy")
         plt.savefig("Training and Validation Accuracy")
-        

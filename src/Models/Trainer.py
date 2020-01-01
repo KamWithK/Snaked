@@ -87,7 +87,7 @@ class Trainer():
                 # Update prameters
                 self.optimizer.step()
 
-                loss_accuracy_keeper.update_loss_acc(data, target, output, self.criterion, "train")
+                loss_accuracy_keeper.update_loss_acc(data, target, output, self.criterion, "train", ii, len(self.train_loader))
 
                 # Training progress
                 percent = 100 * (ii + 1) / len(self.train_loader)
@@ -107,14 +107,14 @@ class Trainer():
                     self.model.eval()
 
                     # Validation loop
-                    for data, target in self.validation_loader:
+                    for ii, (data, target) in enumerate(self.validation_loader, 0):
                         # Use GPU if available
                         data, target = data.to(self.device), target.to(self.device)
                         
                         # Forward pass
                         output = self.model(data)
 
-                        loss_accuracy_keeper.update_loss_acc(data, target, output, self.criterion, "validation")
+                        loss_accuracy_keeper.update_loss_acc(data, target, output, self.criterion, "validation", ii, len(self.validation_loader))
                     
                     # Average losses
                     loss_accuracy_keeper.update_average_loss_acc(len(self.train_loader.dataset))
