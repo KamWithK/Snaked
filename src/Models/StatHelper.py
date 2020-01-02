@@ -44,6 +44,8 @@ class LossAccuracyKeeper():
         self.writer.add_scalar(form + "/loss", self.loss[form] / data_length, self.current_epoch * (progress/data_length))
         self.writer.add_scalar(form + "/accuracy", self.acc[form] / data_length, self.current_epoch * (progress/data_length))
 
+        self.writer.flush()
+
     def update_average_loss_acc(self, data_length):
         # Average losses and accuracy
         self.loss["train"], self.loss["validation"] = self.loss["train"] / data_length, self.loss["validation"] / data_length
