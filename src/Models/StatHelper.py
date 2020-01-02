@@ -41,8 +41,8 @@ class LossAccuracyKeeper():
         accuracy = torch.mean(correct_tensor.type(torch.FloatTensor))
         self.acc[form] += accuracy.item() * data.size(0)
 
-        self.writer.add_scalar(form + "/loss", self.loss[form] / data_length, self.current_epoch * (progress/data_length))
-        self.writer.add_scalar(form + "/accuracy", self.acc[form] / data_length, self.current_epoch * (progress/data_length))
+        self.writer.add_scalar(form + "/loss", self.loss[form] / (progress + 1))
+        self.writer.add_scalar(form + "/accuracy", self.acc[form] / (progress + 1))
 
         self.writer.flush()
 
@@ -52,6 +52,13 @@ class LossAccuracyKeeper():
         self.acc["train"], self.acc["validation"] = self.acc["train"] / data_length, self.acc["validation"] / data_length
 
         self.history.append([self.loss["train"], self.loss["validation"], self.acc["train"], self.acc["validation"]])
+
+        self.writer.add_scalar("average/train/loss", self.loss["train"], self.current_epoch - 1)
+        self.writer.add_scalar("average/validation/loss", self.loss["validation"], self.current_epoch - 1)
+        self.writer.add_scalar("average/train/accuracy", self.acc["train"], self.current_epoch - 1)
+        self.writer.add_scalar("average/validation/accuracy", self.acc["validation"], self.current_epoch - 1)
+
+        self.writer.flush()
 
         if self.loss["validation"] < self.validation_loss_min:
             # Track improvement
@@ -65,7 +72,7 @@ class LossAccuracyKeeper():
     def safe_improvement(self, max_epoch_stop):
         if self.epochs_no_improvement == 0:
             return [True, True]
-        elif self.epochs_no_improvement >= max_epoch_stop:
+        elif self.epochs_no_improvement <= max_epoch_stop:
             return [False, True]
         else: return [False, False]
 
