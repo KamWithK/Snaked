@@ -41,8 +41,8 @@ class LossAccuracyKeeper():
         accuracy = torch.mean(correct_tensor.type(torch.FloatTensor))
         self.acc[form] += accuracy.item() * data.size(0)
 
-        self.writer.add_scalar(form + " loss", self.loss[form] / data_length, self.current_epoch * (progress/data_length))
-        self.writer.add_scalar(form + " accuracy", self.acc[form] / data_length, self.current_epoch * (progress/data_length))
+        self.writer.add_scalar(form + "/loss", self.loss[form] / data_length, self.current_epoch * (progress/data_length))
+        self.writer.add_scalar(form + "/accuracy", self.acc[form] / data_length, self.current_epoch * (progress/data_length))
 
     def update_average_loss_acc(self, data_length):
         # Average losses and accuracy
