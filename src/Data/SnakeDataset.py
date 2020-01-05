@@ -16,7 +16,7 @@ class SnakeDataset(Dataset):
         self.transforms = transforms
     
     def __len__(self):
-        return len(self.df.index)
+        return len(self.df)
     
     # Return a single pair (img_tensor, label)
     def __getitem__(self, index):
