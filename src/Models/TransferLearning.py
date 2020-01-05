@@ -6,7 +6,7 @@ from torchvision import transforms, models
 from .Trainer import Trainer
 
 class TransferLearning(Trainer):
-    def __init__(self, model, criterion, optimizer):
+    def __init__(self, model, criterion, optimizer, scheduler, feature_extractor=True):
         image_transforms = {
             "train":
             transforms.Compose([
@@ -28,24 +28,8 @@ class TransferLearning(Trainer):
         }
 
         # Freeze all weights
-        for param in model.parameters():
-            param.requires_grad = False
-
-        model.classifier[6] = nn.Sequential(
-            nn.Linear(model.classifier[6].in_features, 256),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(256, 85),
-            nn.LogSoftmax(dim=1)
-        )
-
-        super().__init__(model, image_transforms, criterion, optimizer)
-
-    def train(self, save_path, max_epoch_stop=5, n_epochs=30, print_every=2):
-        super().train(save_path, max_epoch_stop, n_epochs, print_every)
-
-# Old
-# self.model = models.vgg16(pretrained=True)
-# criterion = nn.NLLLoss()
-# optimizer = optim.Adam(model.parameters())
-# model, history = trainer.train("VGG16Model.pth")
+        if feature_extractor == True:
+            for param in model.parameters():
+                param.requires_grad = False
+        
+        super().__init__(model, image_transforms, criterion, optimizer, scheduler)
