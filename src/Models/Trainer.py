@@ -64,6 +64,7 @@ class Trainer():
     def train(self, save_folder, n_epochs=30):
         self.writer = SummaryWriter(save_folder + "/TensorBoard")
         best_acc = 0.0
+        epoch_no_change = 0
 
         for epoch in range(n_epochs):
             print("Epoch {}/{}:".format(epoch, n_epochs - 1))
@@ -129,6 +130,11 @@ class Trainer():
                         "optimizer_state_dict": self.optimizer.state_dict(),
                         "scheduler_state_dict": self.scheduler.state_dict()
                     }, save_folder + "/Model.tar")
+                elif phase == "validation":
+                    epoch_no_change += 1
+
+                    if epoch_no_change >= 10:
+                        break
                 
             print()
         return self.model
