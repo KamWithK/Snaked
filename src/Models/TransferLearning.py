@@ -6,7 +6,7 @@ from torchvision import transforms, models
 from .Trainer import Trainer
 
 class TransferLearning(Trainer):
-    def __init__(self, model, criterion, optimizer, scheduler, feature_extractor=True):
+    def __init__(self, model, criterion, optimizer, scheduler, path_saved="", feature_extractor = True, trainning=True):
         image_transforms = {
             "train":
             transforms.Compose([
@@ -32,4 +32,4 @@ class TransferLearning(Trainer):
             for param in model.parameters():
                 param.requires_grad = False
         
-        super().__init__(model, image_transforms, criterion, optimizer, scheduler)
+        super().__init__(model, image_transforms, criterion, optimizer, scheduler, path_saved, trainning)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import torch, time
+import torch, os, time
 
 import numpy as np
 
@@ -12,15 +12,35 @@ from Data.SnakeDataset import SnakeDataset
 
 # Trains models
 class Trainer():
-    def __init__(self, model, transforms, criterion, optimizer, scheduler):
-        self.data_loaders = self.get_loaders(transforms)
-        
+    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", trainning=True):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
+        self.optimizer = optimizer
         self.scheduler = scheduler
-        self.model.to(self.device)
+        self.criterion = criterion
 
-        self.criterion, self.optimizer = criterion, optimizer
+        if not os.path.exists(path_saved):
+            self.data_loaders = self.get_loaders(transforms)
+            self.model.epoch = 0
+            self.best_acc = 0.0
+            self.epoch_no_change = 0
+        else:
+            print("Loading saved model")
+            checkpoint = torch.load(path_saved)
+            model.load_state_dict(checkpoint["model_state_dict"])
+            self.model.epoch = checkpoint["epoch"] + 1
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+
+            self.data_loaders = checkpoint["loaders"]
+            self.best_acc = checkpoint["acc"]
+            self.epoch_no_change = checkpoint["epoch_no_change"]
+
+            if trainning == False:
+                self.model.eval()
+            else: self.model.train()
+        
+        self.model.to(self.device)
     
     def get_loaders(self, transforms=transforms.ToTensor()):
         # Train - fit model, Validation - tune hyperparameters, Test - final results
@@ -55,7 +75,7 @@ class Trainer():
 
         data_loaders = {
             "train": train_loader,
-            "validation": validation_loader
+            "validation": validation_loader,
             "test": test_loader
         }
 
@@ -63,10 +83,8 @@ class Trainer():
 
     def train(self, save_folder, n_epochs=30):
         self.writer = SummaryWriter(save_folder + "/TensorBoard")
-        best_acc = 0.0
-        epoch_no_change = 0
 
-        for epoch in range(n_epochs):
+        for epoch in range(self.model.epoch, n_epochs):
             print("Epoch {}/{}:".format(epoch, n_epochs - 1))
             start_time = time.time()
 
@@ -87,7 +105,7 @@ class Trainer():
                         time_left = (100 / progress) * (time.time() - start_time)
                         formated_duration = time.strftime("%H:%M:%S", time.gmtime(time_left))
 
-                    print(f"Phase: {phase}      Progress: {progress}%       Time Left: +{formated_duration}", end="\r")
+                    print(f"Phase: {phase}      Progress: {progress * 100}%       Time Left: +{formated_duration}", end="\r")
 
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
@@ -119,10 +137,11 @@ class Trainer():
 
                 print("\nPhase: {}, Loss: {:.4f}, Acc: {:.4f}, Time: {:.4f}".format(phase, epoch_loss, epoch_acc, epoch_time))
 
-                if phase == "validation" and epoch_acc > best_acc:
-                    best_acc = epoch_acc
+                if phase == "validation" and epoch_acc > self.best_acc:
+                    self.best_acc = epoch_acc
                     torch.save({
                         "epoch": epoch,
+                        "epoch_no_change": self.epoch_no_change,
                         "acc": epoch_acc,
                         "loss": epoch_loss,
                         "loaders": self.data_loaders,
@@ -131,19 +150,10 @@ class Trainer():
                         "scheduler_state_dict": self.scheduler.state_dict()
                     }, save_folder + "/Model.tar")
                 elif phase == "validation":
-                    epoch_no_change += 1
+                    self.epoch_no_change += 1
 
-                    if epoch_no_change >= 10:
+                    if self.epoch_no_change >= 10:
                         break
                 
             print()
         return self.model
-
-    def load(self, model, path, trainning=False):
-        checkpoint = torch.load(path)
-        self.model.load_state_dict(checkpoint["model_state_dict"])
-        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-
-        if trainning == False:
-            model.eval()
-        else: model.train()
