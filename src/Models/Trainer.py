@@ -56,6 +56,7 @@ class Trainer():
         data_loaders = {
             "train": train_loader,
             "validation": validation_loader
+            "test": test_loader
         }
 
         return data_loaders
@@ -123,6 +124,7 @@ class Trainer():
                         "epoch": epoch,
                         "acc": epoch_acc,
                         "loss": epoch_loss,
+                        "loaders": self.data_loaders,
                         "model_state_dict": self.model.state_dict(),
                         "optimizer_state_dict": self.optimizer.state_dict(),
                         "scheduler_state_dict": self.scheduler.state_dict()
