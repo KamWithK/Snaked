@@ -103,7 +103,7 @@ class Trainer():
                 else: self.model.eval()
 
                 for i, (inputs, labels) in enumerate(self.data_loaders[phase], 0):
-                    progress = i / len(self.data_loaders[phase].sampler)
+                    progress = 100 * (i + 1) / len(self.data_loaders[phase])
                     
                     if i == 0:
                         time_left, formated_duration = 0, 0
