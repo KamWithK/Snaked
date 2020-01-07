@@ -24,10 +24,13 @@ class Trainer():
         torch.backends.cudnn.enable = True
 
         if not os.path.exists(path_saved):
-            self.data_loaders = self.get_loaders(transforms)
             self.model.epoch = 0
             self.best_acc = 0.0
             self.epoch_no_change = 0
+
+            if os.path.exists("Saved/DataLoaders"):
+                self.data_loaders = torch.load("Saved/DataLoaders")
+            else: self.data_loaders = self.get_loaders(transforms)
         else:
             print("Loading saved model")
             checkpoint = torch.load(path_saved)
