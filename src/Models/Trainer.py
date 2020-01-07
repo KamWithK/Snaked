@@ -5,6 +5,7 @@ import torch, os, time
 
 import numpy as np
 
+from torch import nn
 from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
