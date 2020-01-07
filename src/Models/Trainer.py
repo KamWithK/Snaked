@@ -19,6 +19,10 @@ class Trainer():
         self.scheduler = scheduler
         self.criterion = criterion
 
+        torch.cuda.empty_cache()
+        torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.enable = True
+
         if not os.path.exists(path_saved):
             self.data_loaders = self.get_loaders(transforms)
             self.model.epoch = 0
