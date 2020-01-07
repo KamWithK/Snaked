@@ -45,6 +45,8 @@ class Trainer():
             else: self.model.train()
         
         self.model.to(self.device)
+        if torch.cuda.device_count() > 1:
+            nn.DataParallel(self.model)
     
     def get_loaders(self, transforms=transforms.ToTensor()):
         # Train - fit model, Validation - tune hyperparameters, Test - final results
