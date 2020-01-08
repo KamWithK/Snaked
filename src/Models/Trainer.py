@@ -108,14 +108,8 @@ class Trainer():
 
                 for i, (inputs, labels) in enumerate(self.data_loaders[phase], 0):
                     progress = 100 * (i + 1) / len(self.data_loaders[phase])
-                    
-                    if i == 0:
-                        time_left, formated_duration = 0, 0
-                    else:
-                        time_left = (100 / progress) * (time.time() - start_time)
-                        formated_duration = time.strftime("%H:%M:%S", time.gmtime(time_left))
-
-                    print(f"Phase: {phase}      Progress: {progress * 100}%       Time Left: +{formated_duration}", end="\r")
+                    formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
+                    print(f"Phase: {phase}      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
 
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
