@@ -13,7 +13,7 @@ from Data.SnakeDataset import SnakeDataset
 
 # Trains models
 class Trainer():
-    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", data=None):
+    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", data_loaders=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
         self.model.to(self.device)
@@ -30,7 +30,7 @@ class Trainer():
 
         # Note that it's possible to load a saved model with new data (i.e. for testing/using a model)
         if not data == None:
-            self.set_loaders(data, transforms)
+            self.set_loaders = data_loaders
         elif os.path.exists("Saved/DataLoaders"):
             self.data_loaders = torch.load("Saved/DataLoaders")
         
@@ -49,29 +49,6 @@ class Trainer():
             self.data_loaders = checkpoint["loaders"]
             self.best_acc = checkpoint["acc"]
             self.epoch_no_change = checkpoint["epoch_no_change"]
-
-    # Pass in a dictionary for data_map like the following (note that for full datasets positions DON'T have to be included):
-    #data = {
-        #"train": [path_to_data, path_to_csv, position_start, position_end],
-        #"validation": [path_to_data, path_to_csv, position_start, position_end],
-        #"test": [path_to_data, path_to_csv, position_start, position_end]
-    #}
-    def set_loaders(self, data_map, transforms=transforms.ToTensor(), shuffle=True, batch_size=64, num_workers=5):
-        self.data_loaders = {}
-
-        for name in data_map:
-            path_to_data = data_map[name][0]
-            path_to_csv = data_map[name][1]
-            data = SnakeDataset(path_to_data, path_to_csv, transforms[name])
-            self.data_loaders[name] = DataLoader(data, batch_size=batch_size, num_workers=num_workers),
-            if len(data_map[name]) == 4:
-                num_images, indicies = len(data), len(data)
-                if shuffle == True:
-                    indicies = np.random.permutation(num_images)
-                position = [int(data_map[name][2] * num_images), int(data_map[name][3] * num_images)]
-                sampler = SubsetRandomSampler(indicies[position[0]: position[1]])
-                self.data_loaders[name] = DataLoader(data, sampler=sampler, batch_size=batch_size, num_workers=num_workers)
-        return self.data_loaders
     
     def train(self, save_folder, n_epochs=100):
         self.writer = SummaryWriter(save_folder + "/TensorBoard")

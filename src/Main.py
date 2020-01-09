@@ -6,6 +6,7 @@ from torchvision import models, transforms
 from torch import nn, optim
 
 from Models.Trainer import Trainer
+from Data.SnakeDataset import SnakeDataset
 
 data = {
     "train": ["../train", "../train_labels.csv", 0, 0.95],
@@ -41,6 +42,30 @@ def train_test(trainer, path):
     trainer.train(path)
     #trainer.evaluate(path)
 
+# Pass in a dictionary for data_map like the following (note that for full datasets positions DON'T have to be included):
+#data_map = {
+    #"train": [path_to_data, path_to_csv, position_start, position_end],
+    #"validation": [path_to_data, path_to_csv, position_start, position_end],
+    #"test": [path_to_data, path_to_csv, position_start, position_end]
+#}
+def get_loaders(data_map, transforms=transforms.ToTensor(), shuffle=True, batch_size=64, num_workers=5):
+        data_loaders = {}
+
+        for name in data_map:
+            path_to_data = data_map[name][0]
+            path_to_csv = data_map[name][1]
+            data = SnakeDataset(path_to_data, path_to_csv, transforms[name])
+            data_loaders[name] = DataLoader(data, batch_size=batch_size, num_workers=num_workers),
+            if len(data_map[name]) == 4:
+                num_images, indicies = len(data), len(data)
+                if shuffle == True:
+                    indicies = np.random.permutation(num_images)
+                position = [int(data_map[name][2] * num_images), int(data_map[name][3] * num_images)]
+                sampler = SubsetRandomSampler(indicies[position[0]: position[1]])
+                data_loaders[name] = DataLoader(data, sampler=sampler, batch_size=batch_size, num_workers=num_workers)
+        return data_loaders
+
+data_loaders = get_loaders(data, image_transforms)
 # Criterion
 criterion = nn.CrossEntropyLoss()
 
@@ -55,7 +80,7 @@ model.classifier[1] = nn.Sequential(
 )
 optimizer = optim.AdamW(model.parameters())
 scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
-trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/MobileNetV2 - Retrained/Model.tar", data)
+trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/MobileNetV2 - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/MobileNetV2 - Retrained")
 
 # SqueezeNet model
@@ -64,7 +89,7 @@ model = models.squeezenet1_1(pretrained=True)
 model.classifier[1] = nn.Conv2d(512, 85, (1, 1), (1, 1))
 optimizer = optim.AdamW(model.parameters())
 scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
-trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/SqueezeNet - Subset - Retrained/Model.tar", data)
+trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/SqueezeNet - Subset - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/SqueezeNet - Subset - Retrained")
 
 # ResNet50 model
@@ -78,5 +103,5 @@ model.fc = nn.Sequential(
 )
 optimizer = optim.AdamW(model.parameters())
 scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
-trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/ResNet50 - Subset - Retrained/Model.tar", data)
+trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/ResNet50 - Subset - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/ResNet50 - Subset - Retrained")
