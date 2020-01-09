@@ -6,36 +6,42 @@ import torch, os, time
 import numpy as np
 
 from torch import nn
-from torch.utils.data import SubsetRandomSampler, DataLoader
 from torchvision import transforms
+from torch.utils.data import SubsetRandomSampler, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from Data.SnakeDataset import SnakeDataset
 
 # Trains models
 class Trainer():
-    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", trainning=True):
+    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", data=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
+        self.model.to(self.device)
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.criterion = criterion
+
+        if torch.cuda.device_count() > 1:
+            nn.DataParallel(self.model)
 
         torch.cuda.empty_cache()
         torch.backends.cudnn.benchmark = True
         torch.backends.cudnn.enable = True
 
+        # Note that it's possible to load a saved model with new data (i.e. for testing/using a model)
+        if not data == None:
+            self.set_loaders(data, transforms)
+        elif os.path.exists("Saved/DataLoaders"):
+            self.data_loaders = torch.load("Saved/DataLoaders")
+        
         if not os.path.exists(path_saved):
             self.model.epoch = 0
             self.best_acc = 0.0
             self.epoch_no_change = 0
-
-            if os.path.exists("Saved/DataLoaders"):
-                self.data_loaders = torch.load("Saved/DataLoaders")
-            else: self.data_loaders = self.get_loaders(transforms)
         else:
             print("Loading saved model")
-            checkpoint = torch.load(path_saved)
-            model.load_state_dict(checkpoint["model_state_dict"])
+            checkpoint = torch.load(path_saved, map_location=lambda storage, loc: storage)
+            self.model.load_state_dict(checkpoint["model_state_dict"])
             self.model.epoch = checkpoint["epoch"] + 1
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
@@ -44,54 +50,30 @@ class Trainer():
             self.best_acc = checkpoint["acc"]
             self.epoch_no_change = checkpoint["epoch_no_change"]
 
-            if trainning == False:
-                self.model.eval()
-            else: self.model.train()
-        
-        self.model.to(self.device)
-        if torch.cuda.device_count() > 1:
-            nn.DataParallel(self.model)
+    # Pass in a dictionary for data_map like the following (note that for full datasets positions DON'T have to be included):
+    #data = {
+        #"train": [path_to_data, path_to_csv, position_start, position_end],
+        #"validation": [path_to_data, path_to_csv, position_start, position_end],
+        #"test": [path_to_data, path_to_csv, position_start, position_end]
+    #}
+    def set_loaders(self, data_map, transforms=transforms.ToTensor(), shuffle=True, batch_size=64, num_workers=5):
+        self.data_loaders = {}
+
+        for name in data_map:
+            path_to_data = data_map[name][0]
+            path_to_csv = data_map[name][1]
+            data = SnakeDataset(path_to_data, path_to_csv, transforms[name])
+            self.data_loaders[name] = DataLoader(data, batch_size=batch_size, num_workers=num_workers),
+            if len(data_map[name]) == 4:
+                num_images, indicies = len(data), len(data)
+                if shuffle == True:
+                    indicies = np.random.permutation(num_images)
+                position = [int(data_map[name][2] * num_images), int(data_map[name][3] * num_images)]
+                sampler = SubsetRandomSampler(indicies[position[0]: position[1]])
+                self.data_loaders[name] = DataLoader(data, sampler=sampler, batch_size=batch_size, num_workers=num_workers)
+        return self.data_loaders
     
-    def get_loaders(self, transforms=transforms.ToTensor()):
-        # Train - fit model, Validation - tune hyperparameters, Test - final results
-        train_data = SnakeDataset("../train", "../train_labels.csv", transforms["train"])
-        validation_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
-        test_data = SnakeDataset("../train", "../train_labels.csv", transforms["validation"])
-
-        num_images = len(train_data)
-        shuffle = np.random.permutation(num_images)
-
-        # Position of where to start and end splitting data
-        # Extra duplicates which don't use full dataset are for testing
-        train_end = int(num_images * 0.95)
-        validation_start = int(num_images * 0.95)
-        validation_end = int(num_images * 0.975)
-        test_start = int(num_images * 0.975)
-
-        #train_end = int(num_images * 0.001)
-        #validation_start = int(num_images * 0.001)
-        #validation_end = int(num_images * 0.002)
-        #test_start = int(num_images * 0.0002)
-        #test_end = int(num_images * 0.0003)
-
-        train_sampler = SubsetRandomSampler(shuffle[:train_end])
-        validation_sampler = SubsetRandomSampler(shuffle[validation_start:validation_end])
-        test_sampler = SubsetRandomSampler(shuffle[test_start:])
-        #test_sampler = SubsetRandomSampler(shuffle[test_start:test_end])
-
-        train_loader = DataLoader(train_data, sampler=train_sampler, batch_size=64, num_workers=10)
-        validation_loader = DataLoader(validation_data, sampler=validation_sampler, batch_size=64, num_workers=10)
-        test_loader = DataLoader(test_data, sampler=test_sampler, batch_size=64, num_workers=10)
-
-        data_loaders = {
-            "train": train_loader,
-            "validation": validation_loader,
-            "test": test_loader
-        }
-
-        return data_loaders
-
-    def train(self, save_folder, n_epochs=30):
+    def train(self, save_folder, n_epochs=100):
         self.writer = SummaryWriter(save_folder + "/TensorBoard")
 
         for epoch in range(self.model.epoch, n_epochs):
