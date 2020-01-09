@@ -114,7 +114,7 @@ class Trainer():
                 epoch_time = time.time() - start_time
                 
                 if phase == "validation":
-                    self.scheduler.step(epoch_loss)
+                    self.scheduler.step()
 
                 self.writer.add_scalar(phase + "/loss", epoch_loss, epoch)
                 self.writer.add_scalar(phase + "/acc", epoch_acc, epoch)
