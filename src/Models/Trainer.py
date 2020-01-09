@@ -143,3 +143,56 @@ class Trainer():
                 
             print()
         return self.model
+
+    def evaluate(self, save_folder, n_epochs=100):
+        #self.writer = SummaryWriter(save_folder + "/TensorBoard")
+        start_time = time.time()
+
+        running_loss = 0.0
+        running_corrects = 0
+
+        preds_list = torch.zeros(0, dtype=torch.long, device="cpu")
+        labels_list = torch.zeros(0, dtype=torch.long, device="cpu")
+        
+        self.model.eval()
+
+        for i, (inputs, labels) in enumerate(self.data_loaders["test"], 0):
+            progress = 100 * (i + 1) / len(self.data_loaders["test"])
+            formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
+            print(f"Phase: test      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
+
+            inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+            self.optimizer.zero_grad()
+
+            with torch.no_grad():
+                outputs = self.model(inputs)
+                _, preds = torch.max(outputs, 1)
+                loss = self.criterion(outputs, labels)
+
+                preds_list = torch.cat([preds_list, preds.view(-1).cpu()])
+                labels_list = torch.cat([labels_list, labels.view(-1).cpu()])
+
+            running_loss += loss.item() * inputs.size(0)
+            running_corrects += torch.sum(preds == labels.data)
+
+        report = metrics.classification_report(labels_list.numpy(), preds_list.numpy())
+        confusion_matrix = metrics.confusion_matrix(labels_list.numpy(), preds_list.numpy())
+
+        print(report)
+        print(confusion_matrix)
+
+        sn.heatmap(confusion_matrix).get_figure().savefig(save_folder + "/Confusion Matrix.png")
+        
+        test_loss = running_loss / len(self.data_loaders["test"].sampler)
+        test_acc = running_corrects.double() / len(self.data_loaders["test"].sampler)
+        test_time = time.time() - start_time
+        
+        #self.writer.add_scalar(test + "/loss", test_loss, epoch)
+        #self.writer.add_scalar(test + "/acc", test_acc, epoch)
+
+        #self.writer.flush()
+
+        print("\nPhase: test, Loss: {:.4f}, Acc: {:.4f}, Time: {:.4f}".format(test_loss, test_acc, test_time))
+
+    print()
