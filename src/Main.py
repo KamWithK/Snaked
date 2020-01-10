@@ -18,9 +18,10 @@ image_transforms = {
     "train":
     transforms.Compose([
         transforms.RandomResizedCrop(size=256, scale=(0.8, 1)),
-        transforms.RandomRotation(15),
+        transforms.RandomRotation(90),
         transforms.ColorJitter(),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
         transforms.CenterCrop(size=224), #ImgNet standards
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)), # ImgNet standards
