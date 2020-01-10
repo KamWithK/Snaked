@@ -3,12 +3,12 @@
 
 import torch, os, time
 
-import numpy as np
+import seaborn as sn
 
 from torch import nn
 from torchvision import transforms
-from torch.utils.data import SubsetRandomSampler, DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from sklearn import metrics
 from Data.SnakeDataset import SnakeDataset
 
 # Trains models
@@ -29,8 +29,8 @@ class Trainer():
         torch.backends.cudnn.enable = True
 
         # Note that it's possible to load a saved model with new data (i.e. for testing/using a model)
-        if not data == None:
-            self.set_loaders = data_loaders
+        if not data_loaders == None:
+            self.data_loaders = data_loaders
         elif os.path.exists("Saved/DataLoaders"):
             self.data_loaders = torch.load("Saved/DataLoaders")
         
