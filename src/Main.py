@@ -10,7 +10,7 @@ from Data.SnakeDataset import SnakeDataset
 
 data = {
     "train": ["../train", "../train_labels.csv", 0, 0.95],
-    "validation": ["../train", "../train_labels.csv", 0.975, 1],
+    "validation": ["../train", "../train_labels.csv", 0.95, 1],
 #    "test": ["../train", "../train_labels.csv", 0.975, 1]
 }
 
@@ -79,7 +79,7 @@ model.classifier[1] = nn.Sequential(
     nn.Linear(1000, 85)
 )
 optimizer = optim.AdamW(model.parameters())
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
 trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/MobileNetV2 - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/MobileNetV2 - Retrained")
 
@@ -88,7 +88,7 @@ print("\nSqueezeNet 1_1 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
 model = models.squeezenet1_1(pretrained=True)
 model.classifier[1] = nn.Conv2d(512, 85, (1, 1), (1, 1))
 optimizer = optim.AdamW(model.parameters())
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
 trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/SqueezeNet - Subset - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/SqueezeNet - Subset - Retrained")
 
@@ -102,6 +102,6 @@ model.fc = nn.Sequential(
     nn.Linear(1000, 85)
 )
 optimizer = optim.AdamW(model.parameters())
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, total_steps=20)
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
 trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/ResNet50 - Subset - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/ResNet50 - Subset - Retrained")
