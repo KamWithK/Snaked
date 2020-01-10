@@ -82,17 +82,15 @@ class Trainer():
                         if phase == "train":
                             loss.backward()
                             self.optimizer.step()
+                            self.scheduler.step()
 
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
-                
+
                 epoch_loss = running_loss / len(self.data_loaders[phase].sampler)
                 epoch_acc = running_corrects.double() / len(self.data_loaders[phase].sampler)
                 epoch_time = time.time() - start_time
                 
-                if phase == "validation":
-                    self.scheduler.step()
-
                 self.writer.add_scalar(phase + "/loss", epoch_loss, epoch)
                 self.writer.add_scalar(phase + "/acc", epoch_acc, epoch)
 
