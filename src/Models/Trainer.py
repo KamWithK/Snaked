@@ -13,13 +13,14 @@ from Data.SnakeDataset import SnakeDataset
 
 # Trains models
 class Trainer():
-    def __init__(self, model, transforms, criterion, optimizer, scheduler, path_saved="", data_loaders=None):
+    def __init__(self, model, transforms, criterion, optimizer, scheduler, save_folder="", data_loaders=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
         self.model.to(self.device)
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.criterion = criterion
+        self.save_folder = save_folder
 
         if torch.cuda.device_count() > 1:
             nn.DataParallel(self.model)
@@ -34,13 +35,13 @@ class Trainer():
         elif os.path.exists("Saved/DataLoaders"):
             self.data_loaders = torch.load("Saved/DataLoaders")
         
-        if not os.path.exists(path_saved):
+        if not os.path.exists(self.save_folder + "/Model.tar"):
             self.model.epoch = 0
             self.best_acc = 0.0
             self.epoch_no_change = 0
         else:
             print("Loading saved model")
-            checkpoint = torch.load(path_saved, map_location=lambda storage, loc: storage)
+            checkpoint = torch.load(self.save_folder + "/Model.tar", map_location=lambda storage, loc: storage)
             self.model.load_state_dict(checkpoint["model_state_dict"])
             self.model.epoch = checkpoint["epoch"] + 1
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -50,8 +51,8 @@ class Trainer():
             self.best_acc = checkpoint["acc"]
             self.epoch_no_change = checkpoint["epoch_no_change"]
     
-    def train(self, save_folder, n_epochs=100):
-        self.writer = SummaryWriter(save_folder + "/TensorBoard")
+    def train(self, n_epochs=100):
+        self.writer = SummaryWriter(self.save_folder + "/TensorBoard")
 
         for epoch in range(self.model.epoch, n_epochs):
             print("Epoch {}/{}:".format(epoch, n_epochs - 1))
@@ -109,7 +110,7 @@ class Trainer():
                         "model_state_dict": self.model.state_dict(),
                         "optimizer_state_dict": self.optimizer.state_dict(),
                         "scheduler_state_dict": self.scheduler.state_dict()
-                    }, save_folder + "/Model.tar")
+                    }, self.save_folder + "/Model.tar")
                 elif phase == "validation":
                     self.epoch_no_change += 1
 
@@ -119,8 +120,8 @@ class Trainer():
             print()
         return self.model
 
-    def evaluate(self, save_folder, n_epochs=100):
-        #self.writer = SummaryWriter(save_folder + "/TensorBoard")
+    def evaluate(self, n_epochs=100):
+        #self.writer = SummaryWriter(self.save_folder + "/TensorBoard")
         start_time = time.time()
 
         running_loss = 0.0
@@ -157,7 +158,7 @@ class Trainer():
         print(report)
         print(confusion_matrix)
 
-        sn.heatmap(confusion_matrix).get_figure().savefig(save_folder + "/Confusion Matrix.png")
+        sn.heatmap(confusion_matrix).get_figure().savefig(self.save_folder + "/Confusion Matrix.png")
         
         test_loss = running_loss / len(self.data_loaders["test"].sampler)
         test_acc = running_corrects.double() / len(self.data_loaders["test"].sampler)

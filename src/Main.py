@@ -44,8 +44,8 @@ def train_test(trainer, path):
         os.mkdir("Saved")
     if not os.path.exists(path):
         os.mkdir(path)
-    trainer.train(path)
-    #trainer.evaluate(path)
+    trainer.train()
+    #trainer.evaluate()
 
 def find_lr(model, optimizer, criterion, save_folder):
     lr_finder = LRFinder(model, optimizer, criterion, torch.device("cuda" if torch.cuda.is_available() else "cpu"))
