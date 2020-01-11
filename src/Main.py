@@ -48,10 +48,11 @@ def train_test(trainer, path):
     #trainer.evaluate(path)
 
 def find_lr(model, optimizer, criterion, save_folder):
-    lr_finder = LRFinder(model, optimizer, criterion)
-    lr_finder.range_test(data_loaders["train"], end_lr=100, num_iter=100)
+    lr_finder = LRFinder(model, optimizer, criterion, torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    lr_finder.range_test(data_loaders["train"], end_lr=10, num_iter=1000)
     lr_finder.plot()
     plt.savefig(save_folder + "/LRvsLoss.png")
+    plt.close()
 
 # Pass in a dictionary for data_map like the following (note that for full datasets positions DON'T have to be included):
 #data_map = {
@@ -59,7 +60,7 @@ def find_lr(model, optimizer, criterion, save_folder):
     #"validation": [path_to_data, path_to_csv, position_start, position_end],
     #"test": [path_to_data, path_to_csv, position_start, position_end]
 #}
-def get_loaders(data_map, transforms=transforms.ToTensor(), shuffle=True, batch_size=64, num_workers=5):
+def get_loaders(data_map, transforms=transforms.ToTensor(), shuffle=True, batch_size=128, num_workers=5):
         data_loaders = {}
 
         for name in data_map:
@@ -90,8 +91,8 @@ model.classifier[1] = nn.Sequential(
     nn.Linear(1000, 85)
 )
 optimizer = optim.AdamW(model.parameters())
-find_lr(model, optimizer, criterion, "Saved/MobileNetV2 - Retrained")
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
+#find_lr(model, optimizer, criterion, "Saved/MobileNetV2 - Retrained")
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 3e-3, epochs=100, steps_per_epoch=len(data_loaders["train"]))
 trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/MobileNetV2 - Retrained/Model.tar", data_loaders)
 train_test(trainer, "Saved/MobileNetV2 - Retrained")
 
@@ -100,10 +101,10 @@ print("\nSqueezeNet 1_1 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
 model = models.squeezenet1_1(pretrained=True)
 model.classifier[1] = nn.Conv2d(512, 85, (1, 1), (1, 1))
 optimizer = optim.AdamW(model.parameters())
-find_lr(model, optimizer, criterion, "Saved/SqueezeNet - Subset - Retrained")
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
-trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/SqueezeNet - Subset - Retrained/Model.tar", data_loaders)
-train_test(trainer, "Saved/SqueezeNet - Subset - Retrained")
+#find_lr(model, optimizer, criterion, "Saved/SqueezeNet - Retrained")
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 3e-3, epochs=100, steps_per_epoch=len(data_loaders["train"]))
+trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/SqueezeNet - Retrained/Model.tar", data_loaders)
+train_test(trainer, "Saved/SqueezeNet - Retrained")
 
 # ResNet50 model
 print("\nTraining ResNet152 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
@@ -114,8 +115,10 @@ model.fc = nn.Sequential(
     nn.Dropout(0.2),
     nn.Linear(1000, 85)
 )
+if torch.cuda.device_count() > 1:
+            nn.DataParallel(model)
 optimizer = optim.AdamW(model.parameters())
-find_lr(model, optimizer, criterion, "Saved/ResNet50 - Subset - Retrained")
-scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1, epochs=100, steps_per_epoch=len(data_loaders["train"]))
-trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/ResNet50 - Subset - Retrained/Model.tar", data_loaders)
-train_test(trainer, "Saved/ResNet50 - Subset - Retrained")
+#find_lr(model, optimizer, criterion, "Saved/ResNet50 - Retrained")
+scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 1e-2, epochs=100, steps_per_epoch=len(data_loaders["train"]))
+trainer = Trainer(model, image_transforms, criterion, optimizer, scheduler, "Saved/ResNet50 - Retrained/Model.tar", data_loaders)
+train_test(trainer, "Saved/ResNet50 - Retrained")
