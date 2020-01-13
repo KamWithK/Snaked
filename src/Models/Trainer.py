@@ -3,17 +3,17 @@
 
 import torch, os, time
 
+import matplotlib.pyplot as plt
 import seaborn as sn
 
 from torch import nn
-from torchvision import transforms
 from torch.utils.tensorboard import SummaryWriter
 from sklearn import metrics
-from Data.SnakeDataset import SnakeDataset
+from torch_lr_finder import LRFinder
 
 # Trains models
 class Trainer():
-    def __init__(self, model, transforms, criterion, optimizer, scheduler, save_folder="", data_loaders=None):
+    def __init__(self, model, criterion, optimizer, scheduler, save_folder="", data_loaders=None):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model
         self.model.to(self.device)
@@ -21,9 +21,6 @@ class Trainer():
         self.scheduler = scheduler
         self.criterion = criterion
         self.save_folder = save_folder
-
-        if torch.cuda.device_count() > 1:
-            nn.DataParallel(self.model)
 
         torch.cuda.empty_cache()
         torch.backends.cudnn.benchmark = True
@@ -36,6 +33,9 @@ class Trainer():
             self.data_loaders = torch.load("Saved/DataLoaders")
         
         if not os.path.exists(self.save_folder + "/Model.tar"):
+            if torch.cuda.device_count() > 1:
+                self.model = nn.DataParallel(self.model)
+
             self.model.epoch = 0
             self.best_acc = 0.0
             self.epoch_no_change = 0
@@ -43,6 +43,10 @@ class Trainer():
             print("Loading saved model")
             checkpoint = torch.load(self.save_folder + "/Model.tar", map_location=lambda storage, loc: storage)
             self.model.load_state_dict(checkpoint["model_state_dict"])
+            
+            if torch.cuda.device_count() > 1:
+                self.model = nn.DataParallel(self.model)
+
             self.model.epoch = checkpoint["epoch"] + 1
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
@@ -50,6 +54,13 @@ class Trainer():
             self.data_loaders = checkpoint["loaders"]
             self.best_acc = checkpoint["acc"]
             self.epoch_no_change = checkpoint["epoch_no_change"]
+    
+    def find_lr(self):
+        lr_finder = LRFinder(self.model, self.optimizer, self.criterion, self.device)
+        lr_finder.range_test(self.data_loaders["train"], end_lr=10, num_iter=1000)
+        lr_finder.plot()
+        plt.savefig(self.save_folder + "/LRvsLoss.png")
+        plt.close()
     
     def train(self, n_epochs=100):
         self.writer = SummaryWriter(self.save_folder + "/TensorBoard")
