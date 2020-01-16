@@ -54,13 +54,8 @@ organiser = Organiser(data, image_transforms)
 # MobileNet V2 model
 print("Training MobileNet V2 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
 model = models.mobilenet_v2(pretrained=True)
-model.classifier[1] = nn.Sequential(
-    nn.Linear(model.classifier[1].in_features, 1000),
-    nn.ReLU6(),
-    nn.Dropout(0.2),
-    nn.Linear(1000, 85)
-)
-trainer = default_trainer(model, "Saved/MobileNetV2 - Retrained", 256)
+model.classifier[1] = nn.Linear(model.classifier[1].in_features, 85)
+trainer = default_trainer(model, "Saved/MobileNetV2 - Retrained", 256, 5e-4)
 trainer.train()
 
 # SqueezeNet model
@@ -73,11 +68,6 @@ trainer.train()
 # ResNet152 model
 print("\nTraining ResNet152 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
 model = models.resnet152(pretrained=True)
-model.fc = nn.Sequential(
-    nn.Linear(model.fc.in_features, 1000),
-    nn.ReLU6(),
-    nn.Dropout(0.2),
-    nn.Linear(1000, 85)
-)
+model.fc = nn.Linear(model.fc.in_features, 85)
 trainer = default_trainer(model, "Saved/ResNet152 - Retrained", 128, 1e-2)
 trainer.train()
