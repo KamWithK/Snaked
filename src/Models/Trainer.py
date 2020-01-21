@@ -130,6 +130,12 @@ class Trainer():
                 
             print()
         return self.model
+    
+    def jitter(self):
+        self.model.eval()
+        example = torch.rand(1, 3, 224, 224)
+        traced_script_module = torch.jit.trace(self.model, example)
+        traced_script_module.save(self.save_folder + "/TorchScriptModel.pt")
 
     def evaluate(self, n_epochs=100):
         #self.writer = SummaryWriter(self.save_folder + "/TensorBoard")
