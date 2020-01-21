@@ -32,10 +32,9 @@ class Trainer():
         elif os.path.exists("Saved/DataLoaders"):
             self.data_loaders = torch.load("Saved/DataLoaders")
         
+        self.model = nn.DataParallel(self.model)
+        
         if not os.path.exists(self.save_folder + "/Model.tar"):
-            if torch.cuda.device_count() > 1:
-                self.model = nn.DataParallel(self.model)
-
             self.model.epoch = 0
             self.best_acc = 0.0
             self.epoch_no_change = 0
@@ -44,9 +43,6 @@ class Trainer():
             checkpoint = torch.load(self.save_folder + "/Model.tar", map_location=lambda storage, loc: storage)
             self.model.load_state_dict(checkpoint["model_state_dict"])
             
-            if torch.cuda.device_count() > 1:
-                self.model = nn.DataParallel(self.model)
-
             self.model.epoch = checkpoint["epoch"] + 1
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
