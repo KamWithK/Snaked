@@ -77,12 +77,12 @@ class Trainer():
                     self.model.train()
                 else: self.model.eval()
 
-                for i, (inputs, labels) in enumerate(self.data_loaders[phase], 0):
+                for i, item in enumerate(self.data_loaders[phase], 0):
                     progress = 100 * (i + 1) / len(self.data_loaders[phase])
                     formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
                     print(f"Phase: {phase}      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
 
-                    inputs, labels = inputs.to(self.device), labels.to(self.device)
+                    inputs, labels = item.img.to(self.device), item.species_number.to(self.device)
 
                     self.optimizer.zero_grad()
 
@@ -149,12 +149,12 @@ class Trainer():
         
         self.model.eval()
 
-        for i, (inputs, labels) in enumerate(self.data_loaders["test"], 0):
+        for i, item in enumerate(self.data_loaders["test"], 0):
             progress = 100 * (i + 1) / len(self.data_loaders["test"])
             formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
             print(f"Phase: test      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
 
-            inputs, labels = inputs.to(self.device), labels.to(self.device)
+            inputs, labels = item.img.to(self.device), item.species_number.to(self.device)
 
             self.optimizer.zero_grad()
 

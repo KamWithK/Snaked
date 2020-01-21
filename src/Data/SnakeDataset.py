@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import torch
+
 import pandas as pd
 
+from typing import NamedTuple
 from PIL import Image
 from torchvision import transforms
 from torch.utils.data import Dataset
+
+class Item(NamedTuple):
+    index: int
+    img: torch.Tensor
+    species_number: int
+    species: str
+    file_name: str
 
 class SnakeDataset(Dataset):
     # Create/Initialize variables
@@ -18,13 +28,14 @@ class SnakeDataset(Dataset):
     def __len__(self):
         return len(self.df)
     
-    # Return a single pair (img_tensor, label)
+    # Return all information about a data point
+    # Use a Tuple to remain Pythonic with feature growth
     def __getitem__(self, index):
         img = Image.open(self.img_dir + "/" + self.df["filename"][index]).convert("RGB")
         img = self.transforms(img)
 
-        self.df["scientific_name"] = self.df["scientific_name"].astype("category")
-        self.df["species_num"] = self.df["scientific_name"].cat.codes
+        self.df["species_num"] = self.df["scientific_name"].astype("category").cat.codes
 
         number = self.df["species_num"][index]
-        return (img, number.astype("long"))
+
+        return Item(index, img, number.astype("long"), self.df["scientific_name"][index], self.df["filename"][index])
