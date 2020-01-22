@@ -17,7 +17,10 @@ PyTorch is used for ALL deep learning code and Numpy for numerical computations.
 The code is seperated into a main file outlining the chosen algorithms (can be swaped/modified easily) and abstracted code to help train, evaluate and create an executable for any model easily.
 
 There are several novel ideas/techniques used here which help to create neater/more readable pythonic code.
-The primary example is the Item tuple class which allows modular and further extensable code (when extra data needs to be processed).
+The three primary examples of new PyTorch techniques:
+* The Item tuple class which allows modular and further extensable code (when extra data needs to be processed)
+* Use of super convergence/the one-cycle policy in pure PyTorch instead of a highly abstracted library (i.e. Fast.AI)/bare python/numpy
+* Use of a dictionary to dictate how different data sets should be split up to allow easy modifications of data proportions (i.e. switching between full dataset for training and small batches for ensuring all code runs without errors)
 
 ## Sources
 All data currently used for the project comes from AIcrowd's "Snake Species Identification Challenge".
