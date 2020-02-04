@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os
+import os, torch
 
 import numpy as np
 
 from torchvision import transforms
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, SubsetRandomSampler, WeightedRandomSampler
 from Data.SnakeDataset import SnakeDataset
 
 class Organiser():
@@ -21,22 +21,52 @@ class Organiser():
         #"test": [path_to_data, path_to_csv, position_start, position_end]
     #}
     def get_loaders(self, shuffle=True, batch_size=128, num_workers=5):
-        data_loaders = {}
+        self.data_loaders = {}
+        self.data = {}
 
         for name in self.data_map:
             path_to_data = self.data_map[name][0]
             path_to_csv = self.data_map[name][1]
-            data = SnakeDataset(path_to_data, path_to_csv, self.transforms[name])
-            data_loaders[name] = DataLoader(data, batch_size=batch_size, num_workers=num_workers),
+            self.data[name] = SnakeDataset(path_to_data, path_to_csv, self.transforms[name])
+            self.data_loaders[name] = DataLoader(self.data[name], batch_size=batch_size, num_workers=num_workers),
             if len(self.data_map[name]) == 4:
-                num_images, indicies = len(data), len(data)
+                num_images, indicies = len(self.data[name]), len(self.data[name])
                 if shuffle == True:
                     # Randomly shuffle with set seed (for reproducability)
                     indicies = np.random.RandomState(seed=11).permutation(num_images)
                 position = [int(self.data_map[name][2] * num_images), int(self.data_map[name][3] * num_images)]
-                sampler = SubsetRandomSampler(indicies[position[0]: position[1]])
-                data_loaders[name] = DataLoader(data, sampler=sampler, batch_size=batch_size, num_workers=num_workers)
-        return data_loaders
+
+                # Training data must be over/under sampled
+                # To ensure model learns to predict all classes
+                if name == "train":
+                    # Don't create weights for hole dataset, only training portion
+                    # This prevents identical images being in different datasets
+                    item_weights = self.get_weights(indicies[position[0]: position[1]])
+                    sampler = WeightedRandomSampler(torch.from_numpy(item_weights).double(), len(indicies[position[0]: position[1]]))
+                else:
+                    sampler = SubsetRandomSampler(indicies[position[0]: position[1]])
+
+                self.data_loaders[name] = DataLoader(self.data[name], sampler=sampler, batch_size=batch_size, num_workers=num_workers)
+
+        return self.data_loaders
+
+    def get_weights(self, indicies, phase="train"):
+        associations = self.data[phase].targets
+        label_counts = np.zeros(85)
+        sample_weights = np.zeros(len(associations))
+
+        # Find the number of samples of each class
+        # Note that unique_values is an array of labels present AND their count
+        unique_values = np.unique(associations[indicies], return_counts=True)
+        label_counts[unique_values[0]] = unique_values[1]
+
+        # Labels with 0 samples are preset with a class weight of 0
+        # Only set weights for samples where indicies have been provided
+        label_weights = np.divide(1.0, label_counts, out=np.zeros(len(label_counts)), where=label_counts!=0)
+        sample_weights[indicies] = label_weights[associations[indicies]]
+
+        # Note that weights PER SAMPLE are returned, NOT per class
+        return sample_weights
     
     def create_folder(self, model_path: str):
         os.makedirs(model_path, exist_ok=True)
