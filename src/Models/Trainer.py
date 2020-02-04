@@ -133,7 +133,7 @@ class Trainer():
         traced_script_module = torch.jit.trace(self.model, example)
         traced_script_module.save(self.save_folder + "/TorchScriptModel.pt")
 
-    def evaluate(self, n_epochs=100):
+    def evaluate(self, phase="test", feedback=True):
         #self.writer = SummaryWriter(self.save_folder + "/TensorBoard")
         start_time = time.time()
 
@@ -145,10 +145,10 @@ class Trainer():
         
         self.model.eval()
 
-        for i, item in enumerate(self.data_loaders["test"], 0):
-            progress = 100 * (i + 1) / len(self.data_loaders["test"])
+        for i, item in enumerate(self.data_loaders[phase], 0):
+            progress = 100 * (i + 1) / len(self.data_loaders[phase])
             formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
-            print(f"Phase: test      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
+            print(f"Phase: {phase}      Progress: {progress}%       Elapsed Time: +{formated_duration}", end="\r")
 
             inputs, labels = item.img.to(self.device), item.species_number.to(self.device)
 
@@ -165,23 +165,21 @@ class Trainer():
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
-        report = metrics.classification_report(labels_list.numpy(), preds_list.numpy())
-        confusion_matrix = metrics.confusion_matrix(labels_list.numpy(), preds_list.numpy())
-
-        print(report)
-        print(confusion_matrix)
-
-        sn.heatmap(confusion_matrix).get_figure().savefig(self.save_folder + "/Confusion Matrix.png")
-        
-        test_loss = running_loss / len(self.data_loaders["test"].sampler)
-        test_acc = running_corrects.double() / len(self.data_loaders["test"].sampler)
+        test_loss = running_loss / len(self.data_loaders[phase].sampler)
+        test_acc = running_corrects.double() / len(self.data_loaders[phase].sampler)
         test_time = time.time() - start_time
-        
+
+        print("\nPhase: {}, Loss: {:.4f}, Acc: {:.4f}, Time: {:.4f}".format(phase, test_loss, test_acc, test_time))
+
         #self.writer.add_scalar(test + "/loss", test_loss, epoch)
         #self.writer.add_scalar(test + "/acc", test_acc, epoch)
 
         #self.writer.flush()
 
-        print("\nPhase: test, Loss: {:.4f}, Acc: {:.4f}, Time: {:.4f}".format(test_loss, test_acc, test_time))
+        if feedback == True:
+            report = metrics.classification_report(labels_list.numpy(), preds_list.numpy())
+            confusion_matrix = metrics.confusion_matrix(labels_list.numpy(), preds_list.numpy())
 
-    print()
+            print("\n" + report)
+            
+            sn.heatmap(confusion_matrix).get_figure().savefig(self.save_folder + "/Confusion Matrix.png")
