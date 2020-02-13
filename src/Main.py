@@ -61,6 +61,7 @@ def default_trainer(model, path, batch_size, lr=3e-3, find_lr=False):
 organiser = Organiser(data, image_transforms)
 
 # MobileNet V2 model
+# Note max learning rate of 3e-4 works best for cross entropy loss and 5e-4 for LDAM loss
 print("Training MobileNet V2 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
 model = models.mobilenet_v2(pretrained=True)
 model.classifier[1] = nn.Linear(model.classifier[1].in_features, 85)
