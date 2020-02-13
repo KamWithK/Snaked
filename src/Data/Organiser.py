@@ -38,10 +38,10 @@ class Organiser():
 
                 # Training data must be over/under sampled
                 # To ensure model learns to predict all classes
+                item_weights = self.get_weights(indices[position[0]: position[1]])
                 if name == "train" and auto_balance == True:
                     # Don't create weights for hole dataset, only training portion
                     # This prevents identical images being in different datasets
-                    item_weights = self.get_weights(indices[position[0]: position[1]])
                     sampler = WeightedRandomSampler(torch.from_numpy(item_weights).double(), len(indices[position[0]: position[1]]))
                 else:
                     sampler = SubsetRandomSampler(indices[position[0]: position[1]])
