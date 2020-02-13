@@ -52,17 +52,17 @@ class Organiser():
 
     def get_weights(self, indices, phase="train"):
         associations = self.data[phase].targets
-        label_counts = np.zeros(85)
+        self.label_counts = np.zeros(85)
         sample_weights = np.zeros(len(associations))
 
         # Find the number of samples of each class
         # Note that unique_values is an array of labels present AND their count
         unique_values = np.unique(associations[indices], return_counts=True)
-        label_counts[unique_values[0]] = unique_values[1]
+        self.label_counts[unique_values[0]] = unique_values[1]
 
         # Labels with 0 samples are preset with a class weight of 0
         # Only set weights for samples where indices have been provided
-        label_weights = np.divide(1.0, label_counts, out=np.zeros(len(label_counts)), where=label_counts!=0)
+        label_weights = np.divide(1.0, self.label_counts, out=np.zeros(len(self.label_counts)), where=self.label_counts!=0)
         sample_weights[indices] = label_weights[associations[indices]]
 
         # Note that weights PER SAMPLE are returned, NOT per class
