@@ -20,7 +20,7 @@ class Organiser():
         #"validation": [path_to_data, path_to_csv, position_start, position_end],
         #"test": [path_to_data, path_to_csv, position_start, position_end]
     #}
-    def get_loaders(self, shuffle=True, batch_size=128, num_workers=5):
+    def get_loaders(self, shuffle=True, batch_size=128, num_workers=5, auto_balance=False):
         self.data_loaders = {}
         self.data = {}
 
@@ -38,7 +38,7 @@ class Organiser():
 
                 # Training data must be over/under sampled
                 # To ensure model learns to predict all classes
-                if name == "train":
+                if name == "train" and auto_balance == True:
                     # Don't create weights for hole dataset, only training portion
                     # This prevents identical images being in different datasets
                     item_weights = self.get_weights(indices[position[0]: position[1]])
