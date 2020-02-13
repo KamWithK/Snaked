@@ -5,6 +5,7 @@ import os, time, torch
 from torchvision import models, transforms
 from torch import nn, optim
 from Models.Trainer import Trainer
+from Models.Loss import LDAMLoss
 from Data.Organiser import Organiser
 
 data = {
@@ -43,7 +44,8 @@ image_transforms = {
 
 def default_trainer(model, path, batch_size, lr=3e-3, find_lr=False):
     data_loaders = organiser.get_loaders(batch_size=batch_size)
-    criterion = nn.CrossEntropyLoss()
+    #criterion = nn.CrossEntropyLoss()
+    criterion = LDAMLoss(organiser.label_counts)
     optimizer = optim.AdamW(model.parameters())
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer, lr, epochs=100, steps_per_epoch=len(data_loaders["train"]))
 
