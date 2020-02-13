@@ -65,11 +65,11 @@ model.classifier[1] = nn.Linear(model.classifier[1].in_features, 85)
 trainer = default_trainer(model, "Saved/MobileNetV2 - Retrained", 256, 5e-4)
 trainer.train()
 
-# SqueezeNet model
-print("\nSqueezeNet 1_1 model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
-model = models.squeezenet1_1(pretrained=True)
-model.classifier[1] = nn.Conv2d(512, 85, (1, 1), (1, 1))
-trainer = default_trainer(model, "Saved/SqueezeNet - Retrained", 256)
+# ResNext50_32x4d model
+print("\nTraining ResNext50_32x4d model - " + str(time.strftime("%Y-%m-%d %H:%M:%S")))
+model = models.resnext50_32x4d(pretrained=True)
+model.fc = nn.Linear(model.fc.in_features, 85)
+trainer = default_trainer(model, "Saved/ResNext50_32x4d - Retrained", 128, 3e-4)
 trainer.train()
 
 # ResNet152 model
