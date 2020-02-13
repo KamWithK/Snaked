@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import torch, os, time
+import torch, os, time, pandas
 
 import matplotlib.pyplot as plt
 import seaborn as sn
@@ -177,9 +177,8 @@ class Trainer():
         #self.writer.flush()
 
         if feedback == True:
-            report = metrics.classification_report(labels_list.numpy(), preds_list.numpy())
+            report = metrics.classification_report(labels_list.numpy(), preds_list.numpy(), output_dict=True)
             confusion_matrix = metrics.confusion_matrix(labels_list.numpy(), preds_list.numpy())
 
-            print("\n" + report)
-            
+            pandas.DataFrame(report).transpose().to_csv(self.save_folder + "/Report.csv")
             sn.heatmap(confusion_matrix).get_figure().savefig(self.save_folder + "/Confusion Matrix.png")
