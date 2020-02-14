@@ -3,7 +3,7 @@
 5.4 million people are bitten by snakes every year and 81-138 million people die due to snake bites each year.
 Preventing snake bites is clearly a major issue, in need of preventitive measures to save lives.
 This repository serves as a demonstration of the code required to identify snake species and whether poisonous from photographs.
-A sample application/proof of concept will additionally be available via Google Play Store!
+A sample application/proof of concept is additionally available on the [Google Play Store](https://play.google.com/store/apps/details?id=com.kamwithk.snaked)!
 
 ## Challenge
 * Each snake species varies in shape, colour, size, texture and more.
