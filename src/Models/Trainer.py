@@ -31,9 +31,12 @@ class Trainer():
             self.data_loaders = data_loaders
         elif os.path.exists("Saved/DataLoaders"):
             self.data_loaders = torch.load("Saved/DataLoaders")
-        
+
+        # Always use a data parallel model
+        # So if further onwards more GPU's are available they can be utilized easily
         self.model = nn.DataParallel(self.model)
-        
+
+        # Load pre-existing model (along with parameters) when available        
         if not os.path.exists(self.save_folder + "/Model.tar"):
             self.model.epoch = 0
             self.best_acc = 0.0
@@ -68,11 +71,15 @@ class Trainer():
             for phase in ["train", "validation"]:
                 running_loss = 0.0
                 running_corrects = 0
-                
+
+                # Set model phase
+                # To ensure model runs as expected                
                 if phase == "train":
                     self.model.train()
                 else: self.model.eval()
 
+                # The item named tuple is utilized here
+                # To allow easy adjustments and extensibility of functionality
                 for i, item in enumerate(self.data_loaders[phase], 0):
                     progress = 100 * (i + 1) / len(self.data_loaders[phase])
                     formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
@@ -87,6 +94,7 @@ class Trainer():
                         _, preds = torch.max(outputs, 1)
                         loss = self.criterion(outputs, labels)
 
+                        # Placement of scheduler is dependent on the specific scheduler used
                         if phase == "train":
                             loss.backward()
                             self.optimizer.step()
@@ -106,6 +114,8 @@ class Trainer():
 
                 print("\nPhase: {}, Loss: {:.4f}, Acc: {:.4f}, Time: {:.4f}".format(phase, epoch_loss, epoch_acc, epoch_time))
 
+                # Control whether to save, continue or stop training (early stopping)
+                # Based on improvement of accuracy
                 if phase == "validation" and epoch_acc > self.best_acc:
                     self.best_acc = epoch_acc
                     torch.save({
@@ -126,7 +136,8 @@ class Trainer():
                 
             print()
         return self.model
-    
+
+    # Save executable torchscript module    
     def jitter(self):
         self.model.eval()
         example = torch.rand(1, 3, 224, 224)
@@ -143,8 +154,12 @@ class Trainer():
         preds_list = torch.zeros(0, dtype=torch.long, device="cpu")
         labels_list = torch.zeros(0, dtype=torch.long, device="cpu")
         
+        # Set model phase
+        # To ensure model runs as expected    
         self.model.eval()
 
+        # The item named tuple is utilized here
+        # To allow easy adjustments and extensibility of functionality
         for i, item in enumerate(self.data_loaders[phase], 0):
             progress = 100 * (i + 1) / len(self.data_loaders[phase])
             formated_duration = time.strftime("%H:%M:%S", time.gmtime(time.time() - start_time))
