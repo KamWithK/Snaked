@@ -50,7 +50,9 @@ class Trainer():
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
-            self.data_loaders = checkpoint["loaders"]
+            if data_loaders == None:
+                self.data_loaders = checkpoint["loaders"]
+
             self.best_acc = checkpoint["acc"]
             self.epoch_no_change = checkpoint["epoch_no_change"]
     
